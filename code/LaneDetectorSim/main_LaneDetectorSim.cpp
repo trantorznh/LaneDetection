@@ -5,7 +5,7 @@
 //  Created by Xuanpeng Li on 09/13.
 //  Copyright (c) 2013 ESIEE-AMIENS. All rights reserved.
 //
-//	Modified by Vanderlei Vieira and Rodrigo Berriel on 2015
+//	Modified by Vanderlei Vieira and Rodrigo Berriel in 2015
 //
 #include "main_LaneDetectorSim.h"
 #include "Process_LaneDetectorSim.h"
@@ -14,6 +14,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdio.h>
+#include "../utils/cmdline.h"
 
 using namespace cv;
 using namespace std;
@@ -53,13 +54,14 @@ extern const int    TH_KALMANFILTER     = 1; //frames
 
 namespace LaneDetectorSim {
 
-	int Process(int datasetNumber/*, double yaw, double pitch*/)
+	int Process(const char * datasetPath, int argStartFrame, int argEndFrame, double yaw, double pitch)
 	{
-		int	StartFrame		=	1;
-		int EndFrame		= 	0;
-		double YAW_ANGLE    =	0; // yaw;		// Angulo do carro com relacao a  pista
-		double PITCH_ANGLE  =	0; // pitch;	// Angulo do carro com relacao ao horizonte
+		int	StartFrame = argStartFrame;
+		int EndFrame = argEndFrame;
+		double YAW_ANGLE = yaw; // Angulo do carro com relacao a  pista
+		double PITCH_ANGLE = pitch; // Angulo do carro com relacao ao horizonte
 
+		/*
 		char datasetDirectory[30];
 
 		if (datasetNumber == 1){
@@ -83,6 +85,7 @@ namespace LaneDetectorSim {
 		}else if (datasetNumber == 10){
 			strcpy(datasetDirectory,"vasc"); 			EndFrame = 156;
 		}
+		*/
 
 		int  idx            = StartFrame;  //index for image sequence
 		int  sampleIdx      = 1;    //init sampling index
@@ -127,8 +130,7 @@ namespace LaneDetectorSim {
 
 
 		/* Lane detect and tracking */
-		// sprintf(laneImg, LANE_RAW_NAME, idx);
-		sprintf(laneImg, LANE_RAW_NAME , datasetDirectory, idx);
+		sprintf(laneImg, datasetPath, idx);
 		laneMat = cv::imread(laneImg);
 
 		laneMat = laneMat(cv::Rect(400, 450, laneMat.cols-800, laneMat.rows-600));
@@ -159,7 +161,7 @@ namespace LaneDetectorSim {
 
 			/* Lane detect and tracking */
 			// sprintf(laneImg, LANE_RAW_NAME, idx);
-			sprintf(laneImg, LANE_RAW_NAME , datasetDirectory, idx);
+			sprintf(laneImg, datasetPath, idx);
 			laneMat = cv::imread(laneImg);
 
 			laneMat = laneMat(cv::Rect(400, 450, laneMat.cols-800, laneMat.rows-600));
@@ -297,29 +299,37 @@ namespace LaneDetectorSim {
 #endif //__cplusplus
 
 using LaneDetectorSim::Process;
-int main(int argc, const char * argv[])
+int main(int argc, char * argv[])
 {
-	cout << endl;
-	cout << "CHOOSE A DATASET:" << endl;
-	cout << "\t1# - traffic-light/" << endl;
-	cout << "\t2# - cordova1/" << endl;
-	cout << "\t3# - cordova2/" << endl;
-	cout << "\t4# - washington1/" << endl;
-	cout << "\t5# - washington2/" << endl;
-	cout << "\t6# - apostl/" << endl;
-	cout << "\t7# - lanes/" << endl;
-	cout << "\t8# - road-fluid/" << endl;
-	cout << "\t9# - ufes/" << endl;
-	cout << "\t10# - vasc/" << endl;
-	cout << "> ";
+	// create a command line parser
+	cmdline::parser parser;
 	
-	int datasetNumber;
-	cin >> datasetNumber;
+	// add options to the parser
+	parser.add<string>("dataset", 'd', "dataset path", true);
+	parser.add<int>("startframe", '\0', "start frame", false, 1);
+	parser.add<int>("endframe", '\0', "end frame", true);
+	parser.add("verbose", 'v', "increased level of verbosity");
+	parser.add<string>("prefix", 'p', "image filename prefix", false, "lane");
+	parser.add<string>("extension", 'e', "image filename extension", false, "png");
+	parser.add<double>("yaw", '\0', "yaw angle", false, 0);
+	parser.add<double>("pitch", '\0', "pitch angle", false, 0);
 
-	// double yaw;
-	// double pitch;
+	// check input
+	parser.parse_check(argc, argv);
 
-	// cin >> ref >> yaw >> pitch;
+	// retrieve input data
+	std::string datasetPath = parser.get<string>("dataset");
+	int argStartFrame = parser.get<int>("startframe");
+	int argEndFrame = parser.get<int>("endframe");
+	bool verbose = parser.exist("verbose");
+	std::string imagePrefix = parser.get<string>("prefix");
+	std::string imageExtension = parser.get<string>("extension");
+	double argYawAngle = parser.get<double>("yaw");
+	double argPitchAngle = parser.get<double>("pitch");
 
-	return Process(datasetNumber/*, yaw, pitch*/);
+	// Format datasetPath
+	char * datasetFormat;
+	sprintf(datasetFormat, "%s%s_%s.%s", datasetPath.c_str(), imagePrefix.c_str(), "%d", imageExtension.c_str());
+
+	return Process(datasetFormat, argStartFrame, argEndFrame, argYawAngle, argPitchAngle);
 }
