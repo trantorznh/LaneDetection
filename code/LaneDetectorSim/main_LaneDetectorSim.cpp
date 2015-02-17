@@ -282,12 +282,6 @@ namespace LaneDetectorSim {
 			sampleIdx++;//update the sampling index
 			idx++;
 
-
-			/* LOOP */
-			if(idx == EndFrame){
-				idx = StartFrame;
-				cout << "RESTART" << endl;
-			}
 		}//end while loop
 
 		cv::destroyAllWindows();
