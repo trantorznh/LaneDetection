@@ -1,4 +1,3 @@
-
 //  Process.cpp
 //  LaneDetectorSim1.2
 //
@@ -11,13 +10,11 @@
 //
 
 #include "Process_LaneDetectorSim.h"
+#include "../utils/common.h"
 
 extern const double COEF;
-
 extern const int    FRAME_START;
-
 extern const int    TH_KALMANFILTER;
-
 extern const int    WIN_COLS;
 extern const int    WIN_ROWS;
 
@@ -27,39 +24,40 @@ using namespace cv;
 using namespace std;
 
 namespace LaneDetectorSim{
+
+	// TimeSlice
+	void TimeSlice(cv::Mat input, std::string alias, int frameNumber){
+		if(TIMESLICE_ROW < input.rows){
+			// monta o nome da imagem de saída
+			char filename[50];
+			sprintf(filename, "timeslice_S%.4dE%.4d_R%d_%s.png", START_FRAME, END_FRAME, TIMESLICE_ROW, alias.c_str());
+			
+			if(frameNumber == START_FRAME){
+				// copia a linha e cria a primeira imagem de saída
+				cv::Mat outputImage = cv::Mat::zeros(1, input.cols, input.type());
+				cv::Mat inputRow = input(cv::Rect(0, TIMESLICE_ROW, input.cols, 1));
+				inputRow.copyTo(outputImage);
+				imwrite(filename, outputImage);
+			}else{
+				// to-do: if (VERBOSE)
+				std::cout << "TimeSlice '" << alias << "': frame #" << frameNumber << " adicionado!" << std::endl;
+				cv::Mat tmpOutputImage = imread(filename);
+				cv::Mat inputRow = input(cv::Rect(0, TIMESLICE_ROW, input.cols, 1));
+				cv::Mat outputImage = cv::Mat::zeros(tmpOutputImage.rows+1, tmpOutputImage.cols, tmpOutputImage.type());
+				tmpOutputImage.copyTo(outputImage(cv::Rect(0, 1, tmpOutputImage.cols, tmpOutputImage.rows)));
+				inputRow.copyTo(outputImage(cv::Rect(0,0,inputRow.cols, 1)));
+				imwrite(filename, outputImage);
+				if (frameNumber == END_FRAME-1) std::cout << "TimeSlice '" << alias << "': concluído com sucesso!" << std::endl;
+			}
+		}
+	}
+
 	/*
 	 * This function processes the video and detects the lanes
 	 * Record the effected data after Kalman tracking works
 	 * When lane changes, we reset the Kalman filter and laneKalmanIdx
 	 * Considering the situation that the lane changes but Kalman filter not works
 	 */
-
-	void TimeSlice(Mat laneMat, char name[], int index, int row){
-		char file1[20];
-		if(row<laneMat.rows){
-			sprintf(file1, "%s_row-%d.png", name, row);
-			Mat vazia = Mat::zeros(0,laneMat.cols, laneMat.type());
-			Mat outputImg = imread(file1);
-
-			if(outputImg.empty())
-				imwrite(file1, vazia);
-
-			if(index != outputImg.rows){
-				imwrite(file1, vazia);
-				outputImg = imread(file1);
-			}
-
-			outputImg.push_back(laneMat.row(row));
-			// laneMat.row(row).copyTo(outputImg.row(index));
-			laneMat.row(row+1) = COR;
-			laneMat.row(row-1) = COR;
-
-			imshow(name, outputImg);
-
-			imwrite(file1, outputImg);
-		}
-	}
-
 	void ProcessLaneImage(Mat &laneMat,
 	                      int index,
 						  const LaneDetector::LaneDetectorConf &laneDetectorConf,
@@ -85,6 +83,8 @@ namespace LaneDetectorSim{
 
 		/* Reduce the size of raw image */
 		resize(laneMat, laneMat, Size(cvRound(WIDTH * COEF), cvRound(HEIGHT * COEF)), INTER_AREA);
+
+		if (TIMESLICE_ROW > 0) TimeSlice(laneMat,"raw", index);
 
 		/* Change color to grayscale */
 		Mat grayMat = Mat(cvRound(HEIGHT * COEF), cvRound(WIDTH * COEF), CV_8UC1);
@@ -112,7 +112,6 @@ namespace LaneDetectorSim{
 		Mat mask_yellow = Mat::zeros(laneMat.size(),laneMat.type());
 		Mat mask_green = Mat::zeros(laneMat.size(),laneMat.type());
 		Mat lane = laneMat;
-		int row = 120;
 
 		// imshow("real", laneMat); //COOL
 
@@ -130,7 +129,7 @@ namespace LaneDetectorSim{
 				line(laneMat, Point2d(iter->startPoint.x+offsetX, iter->startPoint.y+offsetY),
 					Point2d(iter->endPoint.x+offsetX, iter->endPoint.y+offsetY), CV_RGB(255, 255, 0), 3);
 				line(mask_yellow, Point2d(iter->startPoint.x+offsetX, iter->startPoint.y+offsetY),
-					Point2d(iter->endPoint.x+offsetX, iter->endPoint.y+offsetY), CV_RGB(255, 255, 0), 3);
+					Point2d(iter->endPoint.x+offsetX, iter->endPoint.y+offsetY), CV_RGB(255, 255, 0), 1);
 			}
 
 			if(hfLanes.size() == 2) {
@@ -312,7 +311,7 @@ namespace LaneDetectorSim{
 		}
 
 		/* Consider an error LO */
-		if (isnan(lateralOffset))
+		if (std::isnan(lateralOffset))
 			lateralOffset = lastLateralOffset;
 
 		if(!isTrackFailed)
@@ -326,7 +325,7 @@ namespace LaneDetectorSim{
 				for (vector<LaneDetector::Lane>::const_iterator iter = postLanes.begin(); iter != postLanes.end(); ++iter)
 				{
 					line(laneMat, Point2d(iter->startPoint.x+offsetX, iter->startPoint.y+offsetY), Point2d(iter->endPoint.x+offsetX, iter->endPoint.y+offsetY), CV_RGB(0, 255, 0), 3);
-					line(mask_green, Point2d(iter->startPoint.x+offsetX, iter->startPoint.y+offsetY), Point2d(iter->endPoint.x+offsetX, iter->endPoint.y+offsetY), CV_RGB(0, 255, 0), 3);
+					line(mask_green, Point2d(iter->startPoint.x+offsetX, iter->startPoint.y+offsetY), Point2d(iter->endPoint.x+offsetX, iter->endPoint.y+offsetY), CV_RGB(0, 255, 0), 1);
 				}
 
 				if( hfLanes.size() != 2 || abs(lateralOffset - lastLateralOffset) > 0.1)
@@ -373,10 +372,12 @@ namespace LaneDetectorSim{
 		// imshow("YELLOW",mask_yellow);
 		// imshow("GREEN",mask_green);
 
-		// TimeSlice(laneMat,"AmostraReal", index, row);
-		// TimeSlice(mask_pre, "PreROI", index, row);
-		// TimeSlice(mask_yellow, "YELLOW", index, row);
-		// TimeSlice(mask_green, "GREEN", index, row);
+		if (TIMESLICE_ROW > 0){
+			TimeSlice(laneMat,"finalResult", index);
+			TimeSlice(mask_pre, "antesROI", index);
+			TimeSlice(mask_yellow, "yellow", index);
+			TimeSlice(mask_green, "green", index);
+		}
 		delete text;
 
 	}//end ProcessLaneImage

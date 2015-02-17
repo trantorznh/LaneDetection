@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include "../utils/cmdline.h"
+#include "../utils/common.h"
 
 using namespace cv;
 using namespace std;
@@ -34,7 +35,6 @@ extern const int    WIN_ROWS            = 3;
 /* Run applicaiton */
 extern const int    IMAGE_RECORD        = 0;
 
-
 /* Database Directories and frames
 apostl/ 		#800
 cordova1/		#249
@@ -45,12 +45,12 @@ road-frag/		#470
 ufes/			#333
 vasc/			#156
 washington1/	#336
-washington2/	#231
-*/
+washington2/	#231 */
 
-extern const char LANE_RAW_NAME[] = "../datasets/%s/lane_%d.png"; // dataset path
-
-extern const int    TH_KALMANFILTER     = 1; //frames
+int TIMESLICE_ROW;
+int START_FRAME;
+int END_FRAME;
+extern const int TH_KALMANFILTER = 1; //frames
 
 namespace LaneDetectorSim {
 
@@ -128,15 +128,15 @@ namespace LaneDetectorSim {
 
 		InitlaneFeatures(laneFeatures);
 
-
 		/* Lane detect and tracking */
 		sprintf(laneImg, datasetPath, idx);
 		laneMat = cv::imread(laneImg);
-
-		laneMat = laneMat(cv::Rect(400, 450, laneMat.cols-800, laneMat.rows-600));
+		cv::Rect ROI = cv::Rect(400, 450, laneMat.cols-800, laneMat.rows-600);
+		laneMat = laneMat(ROI);
 
 		LaneDetector::InitlaneDetectorConf(laneMat, laneDetectorConf, 2); // KIT 1, ESIEE 2
 		LaneDetector::InitLaneKalmanFilter(laneKalmanFilter, laneKalmanMeasureMat, laneKalmanIdx);
+
 		cv::imshow("Lane System", laneMat);
 		cv::moveWindow("Lane System", 0, 0);
 
@@ -160,11 +160,9 @@ namespace LaneDetectorSim {
 			double startTime = (double)cv::getTickCount();
 
 			/* Lane detect and tracking */
-			// sprintf(laneImg, LANE_RAW_NAME, idx);
 			sprintf(laneImg, datasetPath, idx);
 			laneMat = cv::imread(laneImg);
-
-			laneMat = laneMat(cv::Rect(400, 450, laneMat.cols-800, laneMat.rows-600));
+			laneMat = laneMat(ROI);
 
 			ProcessLaneImage(laneMat, idx, laneDetectorConf, startTime,
 				laneKalmanFilter, laneKalmanMeasureMat, laneKalmanIdx,
@@ -293,6 +291,7 @@ namespace LaneDetectorSim {
 #endif //__cplusplus
 
 using LaneDetectorSim::Process;
+
 int main(int argc, char * argv[])
 {
 	// create a command line parser
@@ -302,28 +301,31 @@ int main(int argc, char * argv[])
 	parser.add<string>("dataset", 'd', "dataset path", true);
 	parser.add<int>("startframe", '\0', "start frame", false, 1);
 	parser.add<int>("endframe", '\0', "end frame", true);
+	parser.add<int>("timeslice", 't', "generate timeslices on this row, 0 = OFF", false, 0);
 	parser.add("verbose", 'v', "increased level of verbosity");
 	parser.add<string>("prefix", 'p', "image filename prefix", false, "lane");
 	parser.add<string>("extension", 'e', "image filename extension", false, "png");
 	parser.add<double>("yaw", '\0', "yaw angle", false, 0);
 	parser.add<double>("pitch", '\0', "pitch angle", false, 0);
+	parser.footer("\nusage (sample): ./detector --dataset=../datasets/traffic-light/ --startframe=500 --endframe=2056 --timeslice=120");
 
 	// check input
 	parser.parse_check(argc, argv);
 
 	// retrieve input data
 	std::string datasetPath = parser.get<string>("dataset");
-	int argStartFrame = parser.get<int>("startframe");
-	int argEndFrame = parser.get<int>("endframe");
+	START_FRAME = parser.get<int>("startframe");
+	END_FRAME = parser.get<int>("endframe");
+	TIMESLICE_ROW = parser.get<int>("timeslice");
 	bool verbose = parser.exist("verbose");
 	std::string imagePrefix = parser.get<string>("prefix");
 	std::string imageExtension = parser.get<string>("extension");
 	double argYawAngle = parser.get<double>("yaw");
 	double argPitchAngle = parser.get<double>("pitch");
 
-	// Format datasetPath
+	// format datasetPath
 	char * datasetFormat;
 	sprintf(datasetFormat, "%s%s_%s.%s", datasetPath.c_str(), imagePrefix.c_str(), "%d", imageExtension.c_str());
 
-	return Process(datasetFormat, argStartFrame, argEndFrame, argYawAngle, argPitchAngle);
+	return Process(datasetFormat, START_FRAME, END_FRAME, argYawAngle, argPitchAngle);
 }

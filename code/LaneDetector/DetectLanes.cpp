@@ -1177,8 +1177,8 @@ namespace LaneDetector{
 
 			//! Kalman Predicted Lanes in Next Frame
 			circle(laneMat, Point2d(vp.x, vp.y), 1, CV_RGB(255,0,0));
-			line(laneMat, Point2d(vp.x, vp.y), Point2d(corner_l.x, corner_l.y), CV_RGB(200, 0, 200), 2);
-			line(laneMat, Point2d(vp.x, vp.y), Point2d(corner_r.x, corner_r.y), CV_RGB(0, 200, 200), 2);
+			line(laneMat, Point2d(vp.x, vp.y), Point2d(corner_l.x, corner_l.y), CV_RGB(0, 200, 200), 1);
+			line(laneMat, Point2d(vp.x, vp.y), Point2d(corner_r.x, corner_r.y), CV_RGB(0, 200, 200), 1);
 
 			if (!isChangeLane) {
 				const int proStartXRange = laneDetectorConf.top_range;
