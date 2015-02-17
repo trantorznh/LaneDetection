@@ -44,7 +44,7 @@ namespace LaneDetectorSim{
 		"execTime", "pastTime"
 	};
 
-	void TimeSlice(cv::Mat laneMat, char name[], int index, int row);
+	void TimeSlice(cv::Mat input, std::string alias, int frameNumber);
 
 	void ProcessLaneImage(cv::Mat &laneMat,
 						int index,

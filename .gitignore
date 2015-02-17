@@ -44,3 +44,6 @@ others/
 # Eclipse
 .cproject
 .project
+
+# TimeSlice output
+code/timeslice_*.png
