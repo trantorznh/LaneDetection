@@ -50,6 +50,7 @@ washington2/	#231 */
 int TIMESLICE_ROW;
 int START_FRAME;
 int END_FRAME;
+bool VERBOSE;
 extern const int TH_KALMANFILTER = 1; //frames
 
 namespace LaneDetectorSim {
@@ -157,6 +158,7 @@ namespace LaneDetectorSim {
 		/* Entrance of Process */
 		while (idx <= EndFrame)
 		{
+			if (VERBOSE) std::cout << "\nProcessando frame #" << idx << ":" << std::endl;
 			double startTime = (double)cv::getTickCount();
 
 			/* Lane detect and tracking */
@@ -276,6 +278,12 @@ namespace LaneDetectorSim {
 			else
 				delay = 1;
 
+			// mostra o tempo gasto processado o frame
+			if (VERBOSE){
+				double frameProcessTime = (((double)cv::getTickCount() - startTime)/cv::getTickFrequency())*1000;
+				std::cout << "- Tempo gasto: " << frameProcessTime << "ms" << std::endl;
+			}
+
 			/* Update the sampling index */
 			sampleIdx++;//update the sampling index
 			idx++;
@@ -317,7 +325,7 @@ int main(int argc, char * argv[])
 	START_FRAME = parser.get<int>("startframe");
 	END_FRAME = parser.get<int>("endframe");
 	TIMESLICE_ROW = parser.get<int>("timeslice");
-	bool verbose = parser.exist("verbose");
+	VERBOSE = parser.exist("verbose");
 	std::string imagePrefix = parser.get<string>("prefix");
 	std::string imageExtension = parser.get<string>("extension");
 	double argYawAngle = parser.get<double>("yaw");
@@ -326,6 +334,16 @@ int main(int argc, char * argv[])
 	// format datasetPath
 	char * datasetFormat;
 	sprintf(datasetFormat, "%s%s_%s.%s", datasetPath.c_str(), imagePrefix.c_str(), "%d", imageExtension.c_str());
+
+	// print lane detection info
+	int numFrames = END_FRAME - START_FRAME;
+	std::string outVerbose = (VERBOSE) ? "true" : "false";
+	std::cout << "LANE DETECTION PARAMETERS" << \
+	"\n - dataset: \t" << datasetFormat << \
+	"\n - frames: \tstart(" << START_FRAME << ") -> end(" << END_FRAME << ") = total(" << numFrames << ")" << \
+	"\n - verbose: \t" << outVerbose << \
+	"\n - angles: \tyaw(" << argYawAngle << ")" << ", pitch(" << argPitchAngle << ")\n" << std::endl;
+
 
 	return Process(datasetFormat, START_FRAME, END_FRAME, argYawAngle, argPitchAngle);
 }

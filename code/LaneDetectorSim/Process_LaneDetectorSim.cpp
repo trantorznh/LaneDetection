@@ -37,17 +37,21 @@ namespace LaneDetectorSim{
 				cv::Mat outputImage = cv::Mat::zeros(1, input.cols, input.type());
 				cv::Mat inputRow = input(cv::Rect(0, TIMESLICE_ROW, input.cols, 1));
 				inputRow.copyTo(outputImage);
+				// salva a imagem
 				imwrite(filename, outputImage);
+				std::cout << "- TimeSlice '" << alias << "' foi iniciado. Linha escolhida: " << TIMESLICE_ROW << std::endl;
 			}else{
-				// to-do: if (VERBOSE)
-				std::cout << "TimeSlice '" << alias << "': frame #" << frameNumber << " adicionado!" << std::endl;
+				// lê a imagem atual
 				cv::Mat tmpOutputImage = imread(filename);
-				cv::Mat inputRow = input(cv::Rect(0, TIMESLICE_ROW, input.cols, 1));
+				// cria uma nova matriz que vai receber a imagem lida mais a linha da imagem de entrada
 				cv::Mat outputImage = cv::Mat::zeros(tmpOutputImage.rows+1, tmpOutputImage.cols, tmpOutputImage.type());
+				cv::Mat inputRow = input(cv::Rect(0, TIMESLICE_ROW, input.cols, 1));
 				tmpOutputImage.copyTo(outputImage(cv::Rect(0, 1, tmpOutputImage.cols, tmpOutputImage.rows)));
 				inputRow.copyTo(outputImage(cv::Rect(0,0,inputRow.cols, 1)));
+				// salva a imagem
 				imwrite(filename, outputImage);
-				if (frameNumber == END_FRAME-1) std::cout << "TimeSlice '" << alias << "': concluído com sucesso!" << std::endl;
+				if (VERBOSE && frameNumber % 10 == 0) std::cout << "- TimeSlice '" << alias << "': frame #" << frameNumber << " adicionado!" << std::endl;
+				if (frameNumber == END_FRAME-1) std::cout << "- TimeSlice '" << alias << "': concluído com sucesso!" << std::endl;
 			}
 		}
 	}
