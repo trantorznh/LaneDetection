@@ -345,5 +345,5 @@ int main(int argc, char * argv[])
 	"\n - angles: \tyaw(" << argYawAngle << ")" << ", pitch(" << argPitchAngle << ")\n" << std::endl;
 
 
-	return Process(datasetFormat, START_FRAME, END_FRAME, argYawAngle, argPitchAngle);
+	return Process(datasetFormat.c_str(), START_FRAME, END_FRAME, argYawAngle, argPitchAngle);
 }
