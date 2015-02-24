@@ -332,8 +332,8 @@ int main(int argc, char * argv[])
 	double argPitchAngle = parser.get<double>("pitch");
 
 	// format datasetPath
-	char * datasetFormat;
-	sprintf(datasetFormat, "%s%s_%s.%s", datasetPath.c_str(), imagePrefix.c_str(), "%d", imageExtension.c_str());
+	std::string datasetFormat;
+	datasetFormat = datasetPath + imagePrefix + "_%d.", imageExtension;
 
 	// print lane detection info
 	int numFrames = END_FRAME - START_FRAME;
