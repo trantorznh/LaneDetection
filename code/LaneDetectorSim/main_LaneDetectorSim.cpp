@@ -333,7 +333,7 @@ int main(int argc, char * argv[])
 
 	// format datasetPath
 	std::string datasetFormat;
-	datasetFormat = datasetPath + imagePrefix + "_%d.", imageExtension;
+	datasetFormat = datasetPath + imagePrefix + "_%d." + imageExtension;
 
 	// print lane detection info
 	int numFrames = END_FRAME - START_FRAME;
