@@ -47,3 +47,4 @@ others/
 
 # TimeSlice output
 code/timeslice_*.png
+code/*.txt

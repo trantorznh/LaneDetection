@@ -11,6 +11,8 @@
 
 #include "Process_LaneDetectorSim.h"
 #include "../utils/common.h"
+#include <iostream>
+#include <fstream>
 
 extern const double COEF;
 extern const int    FRAME_START;
@@ -126,6 +128,13 @@ namespace LaneDetectorSim{
 		LaneDetector::DetectLanes(grayMat, laneDetectorConf, offsetX, offsetY, hfLanes, postHfLanes, laneKalmanIdx, isChangeLane);
 		// imshow("gray", grayMat); //COOL
 
+		// Save lane parameters to files
+		std::ofstream fileLanesParameters;
+		if (TIMESLICE_ROW > 0){
+			fileLanesParameters.open("lanesParameters.txt", std::ios::app);
+			fileLanesParameters << index;
+		}
+
 		//! Draw the detected lanes !!!!!!
 		if (!hfLanes.empty()) {
 			LaneDetector::HfLanetoLane(laneMat, hfLanes, lanes);
@@ -134,6 +143,7 @@ namespace LaneDetectorSim{
 					Point2d(iter->endPoint.x+offsetX, iter->endPoint.y+offsetY), CV_RGB(255, 255, 0), 3);
 				line(mask_yellow, Point2d(iter->startPoint.x+offsetX, iter->startPoint.y+offsetY),
 					Point2d(iter->endPoint.x+offsetX, iter->endPoint.y+offsetY), CV_RGB(255, 255, 0), 1);
+				if (TIMESLICE_ROW > 0) fileLanesParameters << " " << iter->startPoint.x+offsetX << " " << iter->startPoint.y+offsetY << " " << iter->endPoint.x+offsetX << " " << iter->endPoint.y+offsetY;
 			}
 
 			if(hfLanes.size() == 2) {
@@ -144,6 +154,8 @@ namespace LaneDetectorSim{
 				circle(laneMat, vanishPt, 4, CV_RGB(100, 100 , 0), 2);
 			}
 		}
+
+		if (TIMESLICE_ROW > 0) fileLanesParameters << "\n";
 
 		int initDone = 0;
 		//! Init finished and it can detect 2 lanes, only run in the init step
