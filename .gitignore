@@ -30,6 +30,7 @@
 *.out
 *.app
 code/detector
+carmen/lane_detection
 
 # Sublime files
 *.sublime-project
@@ -48,3 +49,6 @@ others/
 # TimeSlice output
 code/timeslice_*.png
 code/*.txt
+
+# carmen makefile.depend
+carmen/*.depend
