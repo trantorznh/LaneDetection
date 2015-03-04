@@ -17,7 +17,7 @@
 #include "GenerateLaneIndicators.h"
 
 extern const int FRAME_START;
-extern const int NUM_WINDOW_EWM;
+extern const int NUM_WINDOW_EWM = 5; // EWMA, EWVAR Init (times)
 
 namespace LaneDetector{
     void InitlaneFeatures(LaneFeature &laneFeatures)
@@ -433,7 +433,6 @@ namespace LaneDetector{
             --iter;
             TLC_min = iter->TLC;
         }
-
 
         //!Update the LaneFeature struct
         laneFeatures.frame          = sampleIdx;

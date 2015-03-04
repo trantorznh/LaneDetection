@@ -11,8 +11,11 @@
 #ifndef LaneDetectorSim_main_h
 #define LaneDetectorSim_main_h
 
+#include <opencv2/opencv.hpp>
+
 namespace LaneDetectorSim{
-    int Process(const char * datasetPath, int startFrame, int endFrame, double yaw, double pitch);
+    void Process(cv::Mat image, int frameNumber);
+    void Prepare(cv::Mat laneMat);
 }
 
 #endif

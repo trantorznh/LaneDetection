@@ -8,10 +8,6 @@
 
 #include "IPMTransformation.h"
 
-
-extern const int WIN_COLS;
-extern const int WIN_ROWS;
-
 namespace LaneDetector{
 	void IPMpixelsToWorld(LaneDetectorConf &laneDetectorConf, cv::Mat &xMap, cv::Mat &yMap)
 	{

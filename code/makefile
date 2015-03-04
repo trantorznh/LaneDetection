@@ -3,11 +3,14 @@
 #
 # Author: LI XUANPENG <marshallixp@gmail.com>
 # Date: 15/02/2014
+#
+# Modified by Rodrigo Berriel
+# Date: 03/2015
 
 OCVFLAGS 	= `pkg-config --cflags opencv`
 OCVLIBS 	= `pkg-config --libs opencv` -lstdc++
 
-CPP 		= g++
+CPP 		= g++ -std=c++11
 
 # type of system?
 LBITS 		= $(shell /usr/bin/getconf LONG_BIT)
@@ -19,26 +22,22 @@ else
 endif
 
 DIR 		= ./LaneDetector
-DIR_SIM		= ./LaneDetectorSim
-DIR_RCD		= ./LaneRecorder
 
-SRCS		+= $(wildcard ${DIR_SIM}/*.cpp ${DIR}/*.cpp)
+SRCS		+= $(wildcard main.cpp ${DIR}/*.cpp)
 
 OBJS  		= $(patsubst %.cpp, %.o, $(SRCS))
 
-CFLAGS		+= $(OCVFLAGS)
+CXXFLAGS	+= $(OCVFLAGS) -Wall -Wextra -pedantic-errors
 LIBS		+= $(OCVLIBS)
 BINARY		= detector
 
 all: release
 
 release: $(OBJS)
-		$(CPP) $^ $(LIBS) $(CFLAGS) -o $(BINARY)
+		$(CPP) $^ $(LIBS) $(CXXFLAGS) -o $(BINARY)
 
 .cpp.o:
-		$(CPP) $< $(CFLAGS) $(LIBS) -c -o $@
-
-
+		$(CPP) $< $(CXXFLAGS) $(LIBS) -c -o $@
 
 clean:
 		rm -f $(DIR)/*.o  $(DIR_SIM)/*.o $(DIR_RCD)/*.o $(BINARY)

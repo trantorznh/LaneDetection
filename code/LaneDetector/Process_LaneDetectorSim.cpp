@@ -67,25 +67,19 @@ namespace LaneDetectorSim{
 	void ProcessLaneImage(Mat &laneMat,
 	                      int index,
 						  const LaneDetector::LaneDetectorConf &laneDetectorConf,
-						  const double &startTime,
 						  KalmanFilter &laneKalmanFilter,
 						  Mat &laneKalmanMeasureMat, int &laneKalmanIdx,
 						  vector<Vec2f> &hfLanes,
 						  vector<Vec2f> &lastHfLanes,
 						  double &lastLateralOffset,
 						  double &lateralOffset, int &isChangeLane,
-						  int &detectLaneFlag,  const int &idx, double &execTime,
+						  int &detectLaneFlag,  const int &idx,
 						  vector<Vec2f> &postHfLanes, int &changeDone,
 						  const double &YAW_ANGLE, const double &PITCH_ANGLE)
 	{
 		const int WIDTH = laneMat.cols;
 		const int HEIGHT = laneMat.rows;
 		char *text = new char[100];
-
-		// cout << endl;
-		// cout << "---" << idx << endl;
-		// cout << "laneKalman measure before" << endl;
-		// LaneDetector::PrintMat(laneKalmanMeasureMat);
 
 		/* Reduce the size of raw image */
 		resize(laneMat, laneMat, Size(cvRound(WIDTH * COEF), cvRound(HEIGHT * COEF)), INTER_AREA);
@@ -119,14 +113,12 @@ namespace LaneDetectorSim{
 		Mat mask_green = Mat::zeros(laneMat.size(),laneMat.type());
 		Mat lane = laneMat;
 
-		// imshow("real", laneMat); //COOL
-
 		LaneDetector::DrawPreROI(laneMat, offsetX, offsetY, postHfLanes, laneKalmanIdx, isChangeLane, laneDetectorConf);
 		LaneDetector::DrawPreROI(mask_pre, offsetX, offsetY, postHfLanes, laneKalmanIdx, isChangeLane, laneDetectorConf);
 
-
 		LaneDetector::DetectLanes(grayMat, laneDetectorConf, offsetX, offsetY, hfLanes, postHfLanes, laneKalmanIdx, isChangeLane);
-		// imshow("gray", grayMat); //COOL
+		// imshow("gray", grayMat); //COOL 
+		// rodrigoberriel: this image isn't just a grayscaled one (verify)
 
 		// Save lane parameters to files
 		std::ofstream fileLanesParameters;
@@ -370,23 +362,13 @@ namespace LaneDetectorSim{
 			putText(laneMat, text, Point(laneMat.cols/2, 40), FONT_HERSHEY_SIMPLEX, 0.8, CV_RGB(255, 0, 0));
 		}
 
-
-		execTime = ((double)getTickCount() - startTime)/getTickFrequency();
-
 		/* Draw Lane information */
 		/* Show index of frames */
 		sprintf(text, "Frame: %d", idx);
 		putText(laneMat, text, Point(0, 20), FONT_HERSHEY_SIMPLEX, 0.8, CV_RGB(0, 255, 0));
-		/* Show the process time */
-		sprintf(text, "D&T time: %.2f Hz", 1.0/execTime);
-		putText(laneMat, text, Point(0, 40), FONT_HERSHEY_SIMPLEX, 0.8, CV_RGB(0, 255, 0));
 		/* Show Kalman index */
 		// sprintf(text, "KalmanIdx: %d", laneKalmanIdx);
-		// putText(laneMat, text, Point(0, 60), FONT_HERSHEY_SIMPLEX, 0.7, CV_RGB(0, 255, 0));
-
-		// imshow("PreROI",mask_pre);
-		// imshow("YELLOW",mask_yellow);
-		// imshow("GREEN",mask_green);
+		// putText(laneMat, text, Point(0, 80), FONT_HERSHEY_SIMPLEX, 0.7, CV_RGB(0, 255, 0));
 
 		if (TIMESLICE_ROW > 0){
 			TimeSlice(laneMat,"finalResult", index);
@@ -396,114 +378,8 @@ namespace LaneDetectorSim{
 		}
 		delete text;
 
+		// show: final image
+		cv::imshow("Lane System", laneMat);
+
 	}//end ProcessLaneImage
-
-
-	/* Acquire the sampling time, simulating the real application*/
-	void GetSamplingTime(const char *fileName, vector<float> &samplingTime)
-	{
-		// cout << "get sampling time" << fileName << endl;
-		ifstream file;
-		file.open(fileName);
-		string text;
-		int flag = 0; // odd: frame, even: pastTime
-		while (file >> text)
-		{
-			// cout << text << endl;
-			if(isdigit(text[0])){
-				// cout << "digit" << endl;
-				flag++;
-				if(flag % 2 == 0 ){
-					samplingTime.push_back(atof(text.c_str())); // string to float
-				}
-			}
-		}
-
-		// for(size_t i = 0; i < samplingTime.size(); i++)
-		// {
-		//     cout << samplingTime.at(i) << endl;
-		// }
-
-		file.close();
-	}
-
-
-	void InitRecordData(ofstream &file, const char* fileName, const string *strName, const int &elemNum)
-	{
-		file.open(fileName);
-
-		for(int i = 0; i < elemNum; i++ )
-		{
-			file <<  setiosflags(ios::fixed) << setw(15)  << strName[i];
-		}
-		file << endl;
-	}
-
-
-	void RecordLaneFeatures(ofstream &file, const LaneDetector::LaneFeature &laneFeatures,
-					const double &execTime, const double &pastTime)
-	{
-		file << setiosflags(ios::fixed) << setprecision(0) << setw(15) << laneFeatures.frame;
-		file << setiosflags(ios::fixed) << setprecision(5) << setw(15) << laneFeatures.lateralOffset;
-		file << setiosflags(ios::fixed) << setprecision(5) << setw(15) << laneFeatures.LATSD;
-		file << setiosflags(ios::fixed) << setprecision(5) << setw(15) << laneFeatures.LATSD_Baseline;
-		file << setiosflags(ios::fixed) << setprecision(5) << setw(15) << laneFeatures.LATMEAN;
-		file << setiosflags(ios::fixed) << setprecision(5) << setw(15) << laneFeatures.LATMEAN_Baseline;
-		file << setiosflags(ios::fixed) << setprecision(5) << setw(15) << laneFeatures.LANEDEV;
-		file << setiosflags(ios::fixed) << setprecision(5) << setw(15) << laneFeatures.LANEDEV_Baseline;
-		file << setiosflags(ios::fixed) << setprecision(5) << setw(15) << laneFeatures.LANEX;
-		file << setiosflags(ios::fixed) << setprecision(5) << setw(15) << laneFeatures.TLC;
-		file << setiosflags(ios::fixed) << setprecision(0) << setw(15) << laneFeatures.TLC_2s;
-		file << setiosflags(ios::fixed) << setprecision(5) << setw(15) << laneFeatures.TLCF_2s;
-		file << setiosflags(ios::fixed) << setprecision(0) << setw(15) << laneFeatures.TLC_halfs;
-		file << setiosflags(ios::fixed) << setprecision(5) << setw(15) << laneFeatures.TLCF_halfs;
-		file << setiosflags(ios::fixed) << setprecision(5) << setw(15) << laneFeatures.TLC_min;
-		// file << setiosflags(ios::fixed) << setprecision(5) << setw(15) << laneFeatures.TOT;
-		file << setiosflags(ios::fixed) << setprecision(3) << setw(15) << execTime;
-		file << setiosflags(ios::fixed) << setprecision(3) << setw(15) << pastTime;
-		file << endl;
-	}
-
-	void CodeMsg(const LaneDetector::LaneFeature &laneFeatures, char *str)
-	{
-		char *temp = new char[100];
-		sprintf(temp, "%d", 0);//lane marker
-		strcat(str, temp);
-		sprintf(temp, ", %d", laneFeatures.frame);
-		strcat(str, temp);
-		sprintf(temp, ", %f", laneFeatures.lateralOffset);
-		strcat(str, temp);
-		sprintf(temp, ", %f", laneFeatures.LATSD);
-		strcat(str, temp);
-		sprintf(temp, ", %f", laneFeatures.LATSD_Baseline);
-		strcat(str, temp);
-		sprintf(temp, ", %f", laneFeatures.LATMEAN);
-		strcat(str, temp);
-		sprintf(temp, ", %f", laneFeatures.LATMEAN_Baseline);
-		strcat(str, temp);
-		sprintf(temp, ", %f", laneFeatures.LANEDEV);
-		strcat(str, temp);
-		sprintf(temp, ", %f", laneFeatures.LANEDEV_Baseline);
-		strcat(str, temp);
-		sprintf(temp, ", %f", laneFeatures.LANEX);
-		strcat(str, temp);
-		sprintf(temp, ", %f", laneFeatures.TLC);
-		strcat(str, temp);
-		sprintf(temp, ", %d", laneFeatures.TLC_2s);
-		strcat(str, temp);
-		sprintf(temp, ", %f", laneFeatures.TLCF_2s);
-		strcat(str, temp);
-		sprintf(temp, ", %d", laneFeatures.TLC_halfs);
-		strcat(str, temp);
-		sprintf(temp, ", %f", laneFeatures.TLCF_halfs);
-		strcat(str, temp);
-		sprintf(temp, ", %f", laneFeatures.TLC_min);
-		strcat(str, temp);
-		sprintf(temp, ", %f", laneFeatures.TOT);
-		strcat(str, temp);
-		delete temp;
-	}
-
-
-
 }//LaneDetectorSim
