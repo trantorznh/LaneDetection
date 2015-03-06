@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "LaneDetector/main_LaneDetectorSim.h"
+#include "LaneDetector/Prepare_LaneDetectorSim.h"
 #include "utils/cmdline.h"
 #include "utils/common.h"
 
@@ -17,7 +17,7 @@ int main(int argc, char * argv[]) {
 
 	// create a command line parser
 	cmdline::parser parser;
-	
+
 	// add options to the parser
 	parser.add<std::string>("dataset", 'd', "dataset path", true);
 	parser.add<int>("startframe", '\0', "start frame", false, 1);
@@ -80,7 +80,7 @@ int main(int argc, char * argv[]) {
 		frameImage = frameImage(ROI);
 
 		LaneDetectorSim::Process(frameImage, frameNumber); // modify: when multiple algorithms are available
-		
+
 		frameNumber += 1;
 	}
 	return 0;
